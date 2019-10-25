@@ -2,6 +2,7 @@ package com.ggc.nfa
 
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.api.windowing.time.Time
 
 case class UserBehavior(userId: Long, itemId: Long, categoryId: Int, behavior: String, timestamp: Long)
 
@@ -25,7 +26,13 @@ object PageView extends App {
         UserBehavior(split(0).toLong, split(1).toLong, split(2).toInt, split(3), split(4).toLong)
       })
       .assignAscendingTimestamps(_.timestamp * 1000)
+      .filter(_.behavior == "pv")
+      .map(x => ("pv", 1))
+      .keyBy(_._1)
+      .timeWindow(Time.hours(1))
+      .sum(1)
+      .print()
 
 
-
+  env.execute(getClass.getSimpleName)
 }
