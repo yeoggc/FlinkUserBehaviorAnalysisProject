@@ -10,6 +10,7 @@ import org.apache.flink.util.Collector
 
 case class UvCount(windowEnd: Long, count: Long)
 
+//noinspection DuplicatedCode
 object UniqueVisitor extends App {
 
   val env = StreamExecutionEnvironment.getExecutionEnvironment
