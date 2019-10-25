@@ -17,7 +17,7 @@ object KafkaProducerTest {
     // 创建生产者
     val producer = new KafkaProducer[String, String](properties)
     // 从文件中读取数据
-    val bufferSource = io.Source.fromFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/UserBehaviorAnalysis4GGC/HotItemsAnalysis/src/main/resources/UserBehavior.csv")
+    val bufferSource = io.Source.fromFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/FlinkUserBehaviorAnalysisProject/HotItemsAnalysis/src/main/resources/UserBehavior.csv")
     for( line <- bufferSource.getLines() ){
       val record = new ProducerRecord[String, String](topic, line)
       producer.send(record)

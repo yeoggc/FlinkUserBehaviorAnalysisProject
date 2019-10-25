@@ -28,18 +28,18 @@ object AppMarketingByChannelApp extends App {
   val inputDs =
     env
       .addSource(new SimulatedEventSource)
-//      .assignAscendingTimestamps(_.timestamp)
-    .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor[MarketingUserBehavior](Time.seconds(60)) {
-      override def extractTimestamp(element: MarketingUserBehavior): Long = {
-        element.timestamp
-      }
-    })
+      //      .assignAscendingTimestamps(_.timestamp)
+      .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor[MarketingUserBehavior](Time.seconds(10)) {
+        override def extractTimestamp(element: MarketingUserBehavior): Long = {
+          element.timestamp
+        }
+      })
 
   val ds1 =
     inputDs
       .filter(_.behavior != "UNINSTALL")
       .map(data => {
-//        println(s"inputDS.map data.timestamp=${data.timestamp}")
+        //        println(s"inputDS.map data.timestamp=${data.timestamp}")
         ((data.channel, data.behavior), data.timestamp)
       })
       .keyBy(_._1)
@@ -66,7 +66,13 @@ class MarketingCountByChannel extends ProcessWindowFunction[((String, String), L
     val count = elements.size
 
 
-    println(s"AppMarketingByChannelApp.MarketingCountByChannel#process elementsLast=${formatTs(elements.last._2)},watermark=${formatTs(context.currentWatermark)},startTs=${formatTs(startTs)},endTs=${formatTs(endTs)},channel=${channel},behavior=${behavior},elements.size=${count}")
+//    println(
+//      s"""AppMarketingByChannelApp.MarketingCountByChannel#process
+//         |elementsLast=${formatTs(elements.last._2)},
+//         |watermark=${formatTs(context.currentWatermark)},
+//         |startTs=${formatTs(startTs)},endTs=${formatTs(endTs)},
+//         |channel=${channel},behavior=${behavior},elements.size=${count}"""
+//        .stripMargin)
 
     out.collect(MarketingViewCount(formatTs(startTs), formatTs(endTs), channel, behavior, count))
 

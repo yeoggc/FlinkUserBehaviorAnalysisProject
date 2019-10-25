@@ -30,7 +30,7 @@ object HotItems extends App{
   val ds1 =
     env
       .socketTextStream("localhost", 7777)
-//      .readTextFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/UserBehaviorAnalysis4GGC/HotItemsAnalysis/src/main/resources/UserBehavior.csv")
+//      .readTextFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/FlinkUserBehaviorAnalysisProject/HotItemsAnalysis/src/main/resources/UserBehavior.csv")
 //      .addSource(new FlinkKafkaConsumer[String]("Flink_Hot_Items", new SimpleStringSchema(), properties))
       .map(line => {
         val split = line.split(",")

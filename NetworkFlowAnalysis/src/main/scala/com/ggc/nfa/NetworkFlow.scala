@@ -18,7 +18,7 @@ object NetworkFlow extends App {
 
 
   val ds1 =
-  //    env.readTextFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/UserBehaviorAnalysis4GGC/NetworkFlowAnalysis/src/main/resources/apache.log")
+  //    env.readTextFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/FlinkUserBehaviorAnalysisProject/NetworkFlowAnalysis/src/main/resources/apache.log")
     env.socketTextStream("localhost", 7777)
       .map(line => {
         val linearray = line.split(" ")
