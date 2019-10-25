@@ -52,6 +52,14 @@ object AppMarketingByChannelApp extends App {
 }
 
 class MarketingCountByChannel extends ProcessWindowFunction[((String, String), Long), MarketingViewCount, (String, String), TimeWindow] {
+
+  /**
+   * 当 watermark 推进到某个窗口的windowEnd时，此process方法会被调用
+   *
+   * 如果设置了 maxOutOfOrderness 乱序时间，那么watermark相当于被调慢了maxOutOfOrderness的时间，
+   * 多等maxOutOfOrderness在执行process方法调用
+   *
+   */
   override def process(key: (String, String),
                        context: Context,
                        elements: Iterable[((String, String), Long)],
