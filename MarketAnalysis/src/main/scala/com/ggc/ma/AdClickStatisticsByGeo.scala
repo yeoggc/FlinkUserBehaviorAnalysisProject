@@ -3,7 +3,9 @@ package com.ggc.ma
 import java.sql.Timestamp
 
 import org.apache.flink.api.common.functions.AggregateFunction
+import org.apache.flink.api.common.state.{ValueState, ValueStateDescriptor}
 import org.apache.flink.streaming.api.TimeCharacteristic
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.scala.function.WindowFunction
 import org.apache.flink.streaming.api.windowing.time.Time
@@ -15,12 +17,15 @@ case class AdClickLog(userId: Long, adId: Long, province: String, city: String, 
 
 case class AdCountByProvince(windowEnd: String, province: String, count: Long)
 
+case class BlackListWarning(userId: Long, adId: Long, msg: String)
+
 object AdClickStatisticsByGeo extends App {
 
   val env = StreamExecutionEnvironment.getExecutionEnvironment
   env.setParallelism(1)
   env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
+  val blackListOutputTag = new OutputTag[BlackListWarning]("blackListOutputTag")
 
   val inputDS =
     env
@@ -29,19 +34,73 @@ object AdClickStatisticsByGeo extends App {
         val dataArray = data.split(",")
         AdClickLog(dataArray(0).toLong, dataArray(1).toLong, dataArray(2), dataArray(3), dataArray(4).toLong)
       })
-      .assignAscendingTimestamps(_.timestamp*1000L)
+      .assignAscendingTimestamps(_.timestamp * 1000L)
+
+
+  // 添加黑名单过滤的逻辑
+  val filterBlackListDS =
+    inputDS
+      .keyBy(data => (data.userId, data.adId))
+      .process(new FilterBlackListProcessKeyedFunction(100))
+
 
   val adCountDS =
-    inputDS
+    filterBlackListDS
       .keyBy(_.province)
       .timeWindow(Time.hours(1), Time.seconds(10))
       .aggregate(new CountAgg, new AdCountResultWindow)
 
   adCountDS.print()
 
+  filterBlackListDS
+    .getSideOutput(blackListOutputTag)
+    .print("BlackList")
+
 
   env.execute(getClass.getSimpleName)
 
+
+}
+
+
+class FilterBlackListProcessKeyedFunction(i: Int) extends KeyedProcessFunction[(Long, Long), AdClickLog, AdClickLog] {
+
+  // 定义状态，保存用户对广告的点击量
+  lazy val countState: ValueState[Long] = getRuntimeContext.getState(new ValueStateDescriptor[Long]("count-state", classOf[Long]))
+
+  // 标识位，标记是否发送过黑名单信息
+  lazy val isSend: ValueState[Boolean] = getRuntimeContext.getState(new ValueStateDescriptor[Boolean]("isSent-state", classOf[Boolean]))
+
+  // 保存定时器触发的时间戳
+  lazy val resetTime: ValueState[Long] = getRuntimeContext.getState(new ValueStateDescriptor[Long]("resetTime-state", classOf[Long]))
+
+
+  override def processElement(value: AdClickLog,
+                              ctx: KeyedProcessFunction[(Long, Long), AdClickLog, AdClickLog]#Context,
+                              out: Collector[AdClickLog]): Unit = {
+
+    // 获取当前的count值
+    val curCount = countState.value()
+
+    // 判断如果是第一条数据，count值是0
+
+
+    // 判断计数是否超出上限，如果超过输出黑名单信息到侧输出流
+
+
+    // 判断如果没有发送过黑名单信息，就输出
+
+
+  }
+
+  override def onTimer(timestamp: Long,
+                       ctx: KeyedProcessFunction[(Long, Long),
+                         AdClickLog, AdClickLog]#OnTimerContext,
+                       out: Collector[AdClickLog]): Unit = {
+
+
+
+  }
 
 }
 
