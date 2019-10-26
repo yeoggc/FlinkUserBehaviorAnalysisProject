@@ -30,7 +30,7 @@ class SimulatedEventSource extends RichParallelSourceFunction[MarketingUserBehav
       ctx.collect(MarketingUserBehavior(id, behaviorType, channel, ts))
 
       count += 1
-      TimeUnit.MILLISECONDS.sleep(15L)
+      TimeUnit.MILLISECONDS.sleep(1000L)
 
     }
 

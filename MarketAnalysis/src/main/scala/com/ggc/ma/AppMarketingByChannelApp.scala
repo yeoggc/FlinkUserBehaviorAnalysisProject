@@ -33,6 +33,7 @@ object AppMarketingByChannelApp extends App {
         override def extractTimestamp(element: MarketingUserBehavior): Long = {
           element.timestamp
         }
+
       })
 
   val ds1 =
