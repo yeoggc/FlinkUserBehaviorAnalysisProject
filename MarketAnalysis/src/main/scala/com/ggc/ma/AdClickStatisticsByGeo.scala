@@ -63,7 +63,7 @@ object AdClickStatisticsByGeo extends App {
 }
 
 
-class FilterBlackListProcessKeyedFunction(i: Int) extends KeyedProcessFunction[(Long, Long), AdClickLog, AdClickLog] {
+class FilterBlackListProcessKeyedFunction(maxCount: Int) extends KeyedProcessFunction[(Long, Long), AdClickLog, AdClickLog] {
 
   // 定义状态，保存用户对广告的点击量
   lazy val countState: ValueState[Long] = getRuntimeContext.getState(new ValueStateDescriptor[Long]("count-state", classOf[Long]))
@@ -82,14 +82,27 @@ class FilterBlackListProcessKeyedFunction(i: Int) extends KeyedProcessFunction[(
     // 获取当前的count值
     val curCount = countState.value()
 
-    // 判断如果是第一条数据，count值是0
+    // 判断如果是第一条数据，count值是0,就注册一个定时器
+    if (curCount == 0) {
+      val ts = (ctx.timerService().currentProcessingTime() / (1000 * 60 * 60 * 24) + 1) * 24 * 60 * 60 * 1000L
+      ctx.timerService().registerProcessingTimeTimer(ts)
+      resetTime.update(ts)
+    }
 
+    countState.update(curCount + 1)
 
     // 判断计数是否超出上限，如果超过输出黑名单信息到侧输出流
-
-
-    // 判断如果没有发送过黑名单信息，就输出
-
+    if (curCount >= maxCount) {
+      // 判断如果没有发送过黑名单信息，就输出
+      if (!isSend.value()) {
+        // 判断如果没有发送过黑名单信息，就输出
+        //noinspection FieldFromDelayedInit
+        ctx.output(AdClickStatisticsByGeo.blackListOutputTag, BlackListWarning(value.userId, value.adId, "Click over " + maxCount + " times today"))
+        isSend.update(true)
+      }
+    } else {
+      out.collect(value)
+    }
 
   }
 
@@ -97,8 +110,11 @@ class FilterBlackListProcessKeyedFunction(i: Int) extends KeyedProcessFunction[(
                        ctx: KeyedProcessFunction[(Long, Long),
                          AdClickLog, AdClickLog]#OnTimerContext,
                        out: Collector[AdClickLog]): Unit = {
-
-
+    // 如果当前定时器是重置状态定时器，那么清空相应状态
+    if (timestamp == resetTime.value()) {
+      isSend.clear()
+      countState.clear()
+    }
 
   }
 
