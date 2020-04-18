@@ -2,26 +2,25 @@ package com.ggc.lfd
 
 import java.util
 
-import org.apache.flink.api.common.functions.FlatMapFunction
 import org.apache.flink.cep.PatternSelectFunction
+import org.apache.flink.cep.nfa.aftermatch.AfterMatchSkipStrategy
 import org.apache.flink.cep.scala.CEP
 import org.apache.flink.cep.scala.pattern.Pattern
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.time.Time
-import org.apache.flink.util.Collector
 
 //noinspection DuplicatedCode
-object LoginFailWithCep extends App {
+object YouHuiQuanWithCep extends App {
 
   val env = StreamExecutionEnvironment.getExecutionEnvironment
   env.setParallelism(1)
   env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
   // 1. 读取数据源
-//  val dataStream = env.readTextFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/FlinkUserBehaviorAnalysisProject/res/LoginLog.csv")
-      val dataStream = env.socketTextStream("localhost", 7777)
+  //  val dataStream = env.readTextFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/FlinkUserBehaviorAnalysisProject/res/LoginLog.csv")
+  val dataStream = env.socketTextStream("localhost", 7777)
     .map(data => {
       val dataArray = data.split(",")
       JiFenEvent(dataArray(0).toLong, dataArray(1), dataArray(2), dataArray(3).toLong)
@@ -36,10 +35,10 @@ object LoginFailWithCep extends App {
   // 2. 定义一个模式
   val loginFailPattern =
     Pattern
-      // 定义第一个失败事件模式
-      .begin[JiFenEvent]("start").where(_.eventType == "fail")
-      .next("next").where(_.eventType == "fail")
-      .within(Time.seconds(5))
+      .begin[JiFenEvent]("start", AfterMatchSkipStrategy.skipPastLastEvent())
+      .where(x => true)
+      .timesOrMore(6)
+      .within(Time.minutes(11))
 
   // 3. 将模式应用到数据流上
   val patternStream =
@@ -53,23 +52,19 @@ object LoginFailWithCep extends App {
 
   env.execute(getClass.getSimpleName)
 
-}
+  class LoginFailDetect extends PatternSelectFunction[JiFenEvent, Warning] {
+    override def select(map: util.Map[String, util.List[JiFenEvent]]): Warning = {
+      val firstFailEvent = map.get("start").iterator().next()
 
-class LoginFailDetect extends PatternSelectFunction[JiFenEvent, Warning] {
-  override def select(map: util.Map[String, util.List[JiFenEvent]]): Warning = {
-    val firstFailEvent = map.get("start").iterator().next()
-    val secondFailEvent = map.get("next").iterator().next()
+      Warning(
+        firstFailEvent.userId,
+        firstFailEvent.eventTime, 0L,
+        "login fail 2 times")
 
-    Warning(
-      firstFailEvent.userId,
-      firstFailEvent.eventTime, secondFailEvent.eventTime,
-      "login fail 2 times")
-
+    }
   }
+
 }
 
-class LoginFailDetect2 extends FlatMapFunction[JiFenEvent, Warning]{
-  override def flatMap(value: JiFenEvent, out: Collector[Warning]): Unit = {
 
-  }
-}
+

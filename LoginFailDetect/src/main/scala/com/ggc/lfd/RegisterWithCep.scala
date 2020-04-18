@@ -13,7 +13,7 @@ import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.util.Collector
 
 //noinspection DuplicatedCode
-object LoginFailWithCep extends App {
+object RegisterWithCep extends App {
 
   val env = StreamExecutionEnvironment.getExecutionEnvironment
   env.setParallelism(1)
@@ -37,8 +37,7 @@ object LoginFailWithCep extends App {
   val loginFailPattern =
     Pattern
       // 定义第一个失败事件模式
-      .begin[JiFenEvent]("start").where(_.eventType == "fail")
-      .next("next").where(_.eventType == "fail")
+      .begin[JiFenEvent]("start").times(3)
       .within(Time.seconds(5))
 
   // 3. 将模式应用到数据流上
@@ -53,23 +52,19 @@ object LoginFailWithCep extends App {
 
   env.execute(getClass.getSimpleName)
 
-}
+  class LoginFailDetect extends PatternSelectFunction[JiFenEvent, Warning] {
+    override def select(map: util.Map[String, util.List[JiFenEvent]]): Warning = {
+      val firstFailEvent = map.get("start").iterator().next()
+//      val secondFailEvent = map.get("next").iterator().next()
 
-class LoginFailDetect extends PatternSelectFunction[JiFenEvent, Warning] {
-  override def select(map: util.Map[String, util.List[JiFenEvent]]): Warning = {
-    val firstFailEvent = map.get("start").iterator().next()
-    val secondFailEvent = map.get("next").iterator().next()
+      Warning(
+        firstFailEvent.userId,
+        firstFailEvent.eventTime, 0L,
+        "login fail 2 times")
 
-    Warning(
-      firstFailEvent.userId,
-      firstFailEvent.eventTime, secondFailEvent.eventTime,
-      "login fail 2 times")
-
+    }
   }
+
 }
 
-class LoginFailDetect2 extends FlatMapFunction[JiFenEvent, Warning]{
-  override def flatMap(value: JiFenEvent, out: Collector[Warning]): Unit = {
 
-  }
-}

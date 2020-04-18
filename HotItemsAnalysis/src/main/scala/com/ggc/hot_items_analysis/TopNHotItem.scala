@@ -38,6 +38,7 @@ class TopNHotItem(topSize: Int) extends KeyedProcessFunction[Tuple, ItemViewCoun
     // 也就是当程序看到windowEnd + 1 的水位线时，触发onTimer回调函数
     ctx.timerService().registerEventTimeTimer(input.windowEnd + 1)
 
+
   }
 
   override def onTimer(timestamp: Long,

@@ -9,6 +9,8 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow
 import org.apache.flink.util.Collector
 import redis.clients.jedis.Jedis
 
+import scala.util.hashing.MurmurHash3
+
 //noinspection DuplicatedCode
 object UvWithBloomFilter extends App {
 
@@ -25,6 +27,7 @@ object UvWithBloomFilter extends App {
     .filter(_.behavior == "pv")
     .map(data => ("uv", data.userId))
     .keyBy(_._1)
+
     .timeWindow(Time.hours(1))
     .trigger(new MyTrigger)
     .process(new UvCountWithBloom)
@@ -77,9 +80,11 @@ class Bloom(bitSize: Long) extends Serializable {
   // 用Hash函数实现userID到每一个位的对应关系
   def hash(value: String, seed: Int): Long = {
 
-    //    MurmurHash3.stringHash(value)
 
     var result = 0
+
+//    result = MurmurHash3.stringHash(value)
+
     for (i <- value.indices) {
 
       result = result * seed + value.charAt(i)

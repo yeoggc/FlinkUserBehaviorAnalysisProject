@@ -20,13 +20,13 @@ object PageView extends App {
   val ds1 =
     env
       //      .socketTextStream("localhost", 7777)
-      .readTextFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/FlinkUserBehaviorAnalysisProject/HotItemsAnalysis/src/main/resources/UserBehavior.csv")
+      .readTextFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/FlinkUserBehaviorAnalysisProject/res/UserBehavior.csv")
       .map(line => {
         val split = line.split(",")
         UserBehavior(split(0).toLong, split(1).toLong, split(2).toInt, split(3), split(4).toLong)
       })
       .assignAscendingTimestamps(_.timestamp * 1000)
-      .filter(_.behavior == "pv")
+        .filter(_.behavior == "pv")
       .map(x => ("pv", 1))
       .keyBy(_._1)
       .timeWindow(Time.hours(1))

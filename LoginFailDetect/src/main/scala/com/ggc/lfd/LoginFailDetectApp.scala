@@ -21,11 +21,11 @@ object LoginFailDetectApp extends App {
       .readTextFile("/Users/yeoggc/Documents/AtguiguCode/Flink/Flink_Project_Atguigu/FlinkUserBehaviorAnalysisProject/res/LoginLog.csv")
       .map(data => {
         val dataArray = data.split(",")
-        LoginEvent(dataArray(0).toLong, dataArray(1), dataArray(2), dataArray(3).toLong)
+        JiFenEvent(dataArray(0).toLong, dataArray(1), dataArray(2), dataArray(3).toLong)
       })
       .assignTimestampsAndWatermarks(
-        new BoundedOutOfOrdernessTimestampExtractor[LoginEvent](Time.seconds(3)) {
-          override def extractTimestamp(element: LoginEvent): Long = {
+        new BoundedOutOfOrdernessTimestampExtractor[JiFenEvent](Time.seconds(3)) {
+          override def extractTimestamp(element: JiFenEvent): Long = {
             element.eventTime * 1000L
           }
         })
@@ -41,14 +41,14 @@ object LoginFailDetectApp extends App {
 
 
 //noinspection DuplicatedCode
-class LoginFailWarningAdv(failTimes: Int) extends KeyedProcessFunction[Long, LoginEvent, Warning] {
+class LoginFailWarningAdv(failTimes: Int) extends KeyedProcessFunction[Long, JiFenEvent, Warning] {
 
   // 定义一个List状态，用户保存连续登录失败的事件
-  lazy val loginFailListState: ListState[LoginEvent] = getRuntimeContext.getListState(new ListStateDescriptor[LoginEvent]("loginFailList-state", classOf[LoginEvent]))
+  lazy val loginFailListState: ListState[JiFenEvent] = getRuntimeContext.getListState(new ListStateDescriptor[JiFenEvent]("loginFailList-state", classOf[JiFenEvent]))
 
 
-  override def processElement(value: LoginEvent,
-                              ctx: KeyedProcessFunction[Long, LoginEvent, Warning]#Context,
+  override def processElement(value: JiFenEvent,
+                              ctx: KeyedProcessFunction[Long, JiFenEvent, Warning]#Context,
                               out: Collector[Warning]): Unit = {
     // 按照status筛选失败的事件，如果成功状态清空
     if (value.eventType == "fail") {
@@ -76,13 +76,13 @@ class LoginFailWarningAdv(failTimes: Int) extends KeyedProcessFunction[Long, Log
   }
 }
 
-class LoginFailWarning(failTimes: Int) extends KeyedProcessFunction[Long, LoginEvent, Warning] {
+class LoginFailWarning(failTimes: Int) extends KeyedProcessFunction[Long, JiFenEvent, Warning] {
 
   // 定义一个ListState，用于保存连续登录失败的事件
-  lazy val loginFailListState: ListState[LoginEvent] = getRuntimeContext.getListState(new ListStateDescriptor[LoginEvent]("loginFailList-state", classOf[LoginEvent]))
+  lazy val loginFailListState: ListState[JiFenEvent] = getRuntimeContext.getListState(new ListStateDescriptor[JiFenEvent]("loginFailList-state", classOf[JiFenEvent]))
 
-  override def processElement(value: LoginEvent,
-                              ctx: KeyedProcessFunction[Long, LoginEvent, Warning]#Context,
+  override def processElement(value: JiFenEvent,
+                              ctx: KeyedProcessFunction[Long, JiFenEvent, Warning]#Context,
                               out: Collector[Warning]): Unit = {
 
     // 判断是否是失败事件，如果是，添加到状态中，定义一个定时器
@@ -97,7 +97,7 @@ class LoginFailWarning(failTimes: Int) extends KeyedProcessFunction[Long, LoginE
 
   }
 
-  override def onTimer(timestamp: Long, ctx: KeyedProcessFunction[Long, LoginEvent, Warning]#OnTimerContext, out: Collector[Warning]): Unit = {
+  override def onTimer(timestamp: Long, ctx: KeyedProcessFunction[Long, JiFenEvent, Warning]#OnTimerContext, out: Collector[Warning]): Unit = {
     // 判断状态列表中登录失败的个数
 
     import scala.collection.JavaConversions._

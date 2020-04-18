@@ -84,7 +84,8 @@ class FilterBlackListProcessKeyedFunction(maxCount: Int) extends KeyedProcessFun
 
     // 判断如果是第一条数据，count值是0,就注册一个定时器
     if (curCount == 0) {
-      val ts = (ctx.timerService().currentProcessingTime() / (1000 * 60 * 60 * 24) + 1) * 24 * 60 * 60 * 1000L
+      val ts = (ctx.timerService().currentProcessingTime()
+        / (1000 * 60 * 60 * 24) + 1) * 24 * 60 * 60 * 1000L
       ctx.timerService().registerProcessingTimeTimer(ts)
       resetTime.update(ts)
     }
