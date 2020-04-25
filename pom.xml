@@ -15,32 +15,19 @@
         <module>LoginFailDetect</module>
         <module>OrderTimeoutDetect</module>
         <module>ProjectIndicatorsSet01</module>
+        <module>FlinkTemp01</module>
     </modules>
 
     <properties>
-        <flink.version>1.7.2</flink.version>
+        <flink.version>1.9.2</flink.version>
         <scala.binary.version>2.11</scala.binary.version>
         <kafka.version>2.2.0</kafka.version>
     </properties>
 
     <dependencies>
-        <!-- https://mvnrepositor.com/artifact/org.apache.spark/spark-core -->
-        <!-- https://mvnrepository.com/artifact/org.scala-lang/scala-library -->
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>2.11.8</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.scala-lang/scala-compiler -->
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-compiler</artifactId>
-            <version>2.11.8</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.scala-lang/scala-reflect -->
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-reflect</artifactId>
             <version>2.11.8</version>
         </dependency>
 
@@ -55,6 +42,11 @@
             <version>${flink.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-java_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${scala.binary.version}</artifactId>
             <version>${kafka.version}</version>
@@ -66,8 +58,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-statebackend-rocksdb_2.11</artifactId>
-            <version>1.7.2</version>
+            <artifactId>flink-statebackend-rocksdb_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
         </dependency>
     </dependencies>
 
